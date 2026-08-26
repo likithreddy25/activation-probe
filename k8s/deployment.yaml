@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: activation-probe
+  labels:
+    app: activation-probe
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: activation-probe
+  template:
+    metadata:
+      labels:
+        app: activation-probe
+    spec:
+      containers:
+        - name: activation-probe
+          image: activation-probe:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            # Reaches the same docker-compose Postgres from Phase 1/2 via the
+            # host, same host.docker.internal pattern used by Airflow in
+            # Phase 3 -- kind's nodes are themselves Docker containers on the
+            # same Docker Desktop host, so this resolves the same way.
+            - name: DATABASE_URL
+              value: postgresql://probe:probe@host.docker.internal:5433/activation_probe
+            - name: HF_HOME
+              value: /hf-cache
+          volumeMounts:
+            - name: hf-cache
+              mountPath: /hf-cache
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "1Gi"
+            limits:
+              cpu: "1"
+              memory: "2Gi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 20
+      volumes:
+        # emptyDir, not a PVC: survives container restarts within the pod's
+        # life (so the ~1GB Qwen2.5-0.5B download isn't repeated on a crash
+        # loop) but not pod recreation. A real deployment would use a PVC
+        # (or bake the weights into the image) instead -- noted, not solved,
+        # here; see docs/PHASE4.md.
+        - name: hf-cache
+          emptyDir: {}

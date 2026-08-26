@@ -1,0 +1,17 @@
+# Slim dependency set for the served FastAPI app -- deliberately narrower
+# than pyproject.toml's full dependency list. The service only needs the
+# early-exit single-layer extractor (fast_extract.py) and the trained
+# probe, not nnsight, datasets, openai, or pandas -- those are
+# research/offline tooling from Phase 1, not part of what actually runs in
+# the serving container.
+# torch is installed separately in the Dockerfile, from the CPU-only wheel index
+transformers>=4.44
+scikit-learn>=1.5
+numpy>=1.26
+joblib>=1.4
+fastapi>=0.111
+uvicorn[standard]>=0.30
+sqlalchemy>=2.0
+psycopg2-binary>=2.9
+pydantic>=2.7
+python-dotenv>=1.0

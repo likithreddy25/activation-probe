@@ -26,3 +26,5 @@ logs/
 .terraform/
 *.tfstate
 *.tfstate.backup
+tfplan
+*.tfplan

@@ -16,7 +16,7 @@ Built incrementally, phase by phase, each with its own README:
 | 1 | Probe + eval harness + FastAPI service + Postgres logging | [done](docs/PHASE1.md) |
 | 2 | dbt models on the Postgres log table | [done](docs/PHASE2.md) |
 | 3 | Airflow DAG: nightly eval reruns, dbt trigger, drift alerts | [done](docs/PHASE3.md) |
-| 4 | Containerize (Docker + kind/minikube) + Terraform | not started |
+| 4 | Containerize (Docker + kind/minikube) + Terraform | [done](docs/PHASE4.md) |
 | 5 (optional) | Second serving implementation in Go | not started |
 
 ## Quickstart (Phase 1)
@@ -92,3 +92,32 @@ UI at http://localhost:8081 (airflow/airflow). See
 genuine dbt race condition between overlapping DAG runs) and the actual
 run evidence, including a deliberate synthetic test proving the drift
 alerting really fires.
+
+## Quickstart (Phase 4)
+
+Dockerfile for the FastAPI service (476MB, CPU-only torch -- down from
+3.19GB with the default CUDA-bundled wheel), a basic Kubernetes Deployment
++ Service, and a Terraform configuration managing those same two resources
+against a local `kind` cluster. No real cloud spend -- see docs/PHASE4.md
+for why local kind was chosen and what that trades off.
+
+```bash
+docker build -t activation-probe:latest .
+kind create cluster --config k8s/kind-config.yaml
+kind load docker-image activation-probe:latest --name activation-probe
+
+# either apply the raw manifests directly...
+kubectl apply -f k8s/deployment.yaml -f k8s/service.yaml
+# ...or manage the same resources with Terraform instead (not both at once)
+cd terraform && terraform init && terraform apply
+
+curl localhost:30080/health
+```
+
+Both paths were actually run against a real kind cluster and verified end
+to end (pod healthy, `/classify` returns a real score, and the request
+lands in the same Postgres `classification_log` table from Phase 1/2/3) --
+see [docs/PHASE4.md](docs/PHASE4.md) for the verification evidence and the
+honestly-stated limitations (no PVC for the model cache, no registry, no
+autoscaling -- this is a "basic Deployment + Service," not a production
+deployment).
