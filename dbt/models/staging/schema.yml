@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: stg_classification_log
+    description: Cleaned request log, one row per /classify call.
+    columns:
+      - name: id
+        tests: [not_null, unique]
+      - name: prompt
+        tests: [not_null]
+      - name: score
+        tests: [not_null]
+      - name: flagged
+        tests: [not_null]
+      - name: request_date
+        tests: [not_null]

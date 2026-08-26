@@ -5,8 +5,11 @@ from __future__ import annotations
 import os
 from datetime import datetime, timezone
 
+from dotenv import load_dotenv
 from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, create_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+
+load_dotenv()  # loaded here so DATABASE_URL is correct regardless of import order
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://probe:probe@localhost:5432/activation_probe")
 

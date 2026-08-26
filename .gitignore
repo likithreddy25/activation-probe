@@ -18,9 +18,11 @@ data/cache/
 # model downloads
 .hf_cache/
 
-# dbt / airflow / terraform (later phases)
+# dbt / airflow / terraform
 dbt_packages/
+target/
 logs/
+.user.yml
 .terraform/
 *.tfstate
 *.tfstate.backup

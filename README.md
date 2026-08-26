@@ -14,7 +14,7 @@ Built incrementally, phase by phase, each with its own README:
 | Phase | What | Status |
 |---|---|---|
 | 1 | Probe + eval harness + FastAPI service + Postgres logging | [done](docs/PHASE1.md) |
-| 2 | dbt models on the Postgres log table | not started |
+| 2 | dbt models on the Postgres log table | [done](docs/PHASE2.md) |
 | 3 | Airflow DAG: nightly eval reruns, dbt trigger, drift alerts | not started |
 | 4 | Containerize (Docker + kind/minikube) + Terraform | not started |
 | 5 (optional) | Second serving implementation in Go | not started |
@@ -46,3 +46,25 @@ pytest tests/ -v
 
 See [docs/PHASE1.md](docs/PHASE1.md) for what was built, the actual eval
 numbers (including where the probe struggles), and the latency benchmark.
+
+## Quickstart (Phase 2)
+
+Builds on Phase 1's Postgres instance -- adds a dbt project that turns the
+raw `classification_log` table into a daily flag-rate rollup, a
+per-category breakdown, and a rolling false-positive-rate trend computed
+against labeled ground truth.
+
+```bash
+python scripts/build_dbt_seed.py                    # builds dbt/seeds/labeled_eval_examples.csv
+python scripts/seed_traffic.py --days 14 --clear     # replays labeled data through the real probe into classification_log
+
+cd dbt
+set -a && source ../.env && set +a
+DBT_PROFILES_DIR=. dbt seed
+DBT_PROFILES_DIR=. dbt run
+DBT_PROFILES_DIR=. dbt test
+```
+
+See [docs/PHASE2.md](docs/PHASE2.md) for the model layout, the actual mart
+output, and why the FPR trend is computed against a labeled seed table
+rather than raw flag counts.

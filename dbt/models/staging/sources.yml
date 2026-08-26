@@ -1,0 +1,24 @@
+version: 2
+
+sources:
+  - name: activation_probe_app
+    description: Tables written directly by the FastAPI service (src/activation_probe/service/db.py).
+    schema: public
+    tables:
+      - name: classification_log
+        description: One row per /classify request.
+        columns:
+          - name: id
+            tests: [not_null, unique]
+          - name: prompt
+            tests: [not_null]
+          - name: score
+            tests: [not_null]
+          - name: flagged
+            tests: [not_null]
+          - name: model_layer_used
+            tests: [not_null]
+          - name: model_name
+            tests: [not_null]
+          - name: created_at
+            tests: [not_null]
