@@ -70,24 +70,60 @@ and the final probe are already fixed.
 
 ## Results (actual run, see `artifacts/layer_sweep.json` for full output)
 
-Per-layer CV AUC (train set, 5-fold):
+Full per-layer sweep. **Selection** uses only the two CV columns (5-fold,
+train set); the two test columns are diagnostic only, computed by fitting
+each layer's probe on the full train set and scoring once against the
+held-out test set, to show how CV-based selection compares to what test
+performance would have said (it does not feed back into which layer is
+chosen):
 
-| Layer | CV AUC | Layer | CV AUC | Layer | CV AUC |
-|---|---|---|---|---|---|
-| 0 | 0.738 | 8 | 0.857 | 16 | 0.862 |
-| 1 | 0.734 | 9 | 0.908 | 17 | 0.863 |
-| 2 | 0.742 | 10 | 0.912 | 18 | 0.854 |
-| 3 | 0.738 | **11** | **0.931** | 19 | 0.872 |
-| 4 | 0.758 | 12 | 0.925 | 20 | 0.838 |
-| 5 | 0.772 | 13 | 0.920 | 21 | 0.844 |
-| 6 | 0.796 | 14 | 0.917 | 22 | 0.835 |
-| 7 | 0.826 | 15 | 0.897 | 23 | 0.837 |
+| Layer | CV AUC | CV Acc | Test AUC | Test Acc |
+|---|---|---|---|---|
+| 0 | 0.738 | 0.669 | 0.688 | 0.600 |
+| 1 | 0.734 | 0.669 | 0.670 | 0.550 |
+| 2 | 0.742 | 0.706 | 0.613 | 0.575 |
+| 3 | 0.738 | 0.663 | 0.810 | 0.725 |
+| 4 | 0.758 | 0.688 | 0.788 | 0.700 |
+| 5 | 0.772 | 0.694 | 0.735 | 0.675 |
+| 6 | 0.796 | 0.725 | 0.693 | 0.600 |
+| 7 | 0.826 | 0.788 | 0.785 | 0.675 |
+| 8 | 0.857 | 0.769 | 0.798 | 0.725 |
+| 9 | 0.908 | 0.831 | 0.798 | 0.700 |
+| 10 | 0.912 | 0.825 | 0.863 | 0.750 |
+| **11 (selected)** | **0.931** | **0.825** | 0.880 | 0.775 |
+| 12 | 0.925 | 0.844 | **0.895** | **0.850** |
+| 13 | 0.920 | 0.831 | 0.848 | 0.800 |
+| 14 | 0.917 | 0.825 | 0.863 | 0.800 |
+| 15 | 0.897 | 0.800 | 0.833 | 0.750 |
+| 16 | 0.862 | 0.775 | 0.740 | 0.725 |
+| 17 | 0.863 | 0.788 | 0.773 | 0.725 |
+| 18 | 0.854 | 0.788 | 0.775 | 0.725 |
+| 19 | 0.872 | 0.794 | 0.770 | 0.750 |
+| 20 | 0.838 | 0.781 | 0.783 | 0.750 |
+| 21 | 0.844 | 0.794 | 0.775 | 0.775 |
+| 22 | 0.835 | 0.788 | 0.768 | 0.750 |
+| 23 | 0.837 | 0.750 | 0.740 | 0.750 |
 
-Signal is weak in the early layers, peaks sharply around **layer 11** (of
-24), and degrades gradually toward the output -- consistent with the general
-finding in the interpretability literature that safety-relevant concepts
-tend to be most linearly decodable in the middle of the network, not at the
-input or output.
+Signal is weak in the early layers (AUC ~0.73-0.76 for layers 0-4, barely
+above chance for a probe), climbs through the middle of the network, peaks
+around **layers 9-14**, then degrades gradually toward the output --
+consistent with the general finding in the interpretability literature that
+safety-relevant concepts tend to be most linearly decodable mid-network.
+
+**Layer 11 wins the selection criterion (CV AUC) by a real but modest
+margin**: 0.9313 vs. 0.9250 for the runner-up (layer 12), a gap of about
+0.006 -- smaller than the fold-to-fold std of ~0.04-0.05 on either layer.
+Layers 9-14 are all within ~0.02 CV AUC of each other; this is a broad
+plateau, not a sharp single winner. Worth noting honestly: on the held-out
+test set, **layer 12 actually scores higher** than the selected layer 11
+(0.895 test AUC / 85.0% test accuracy vs. layer 11's 0.880 / 77.5%). This is
+the expected kind of noise from picking a layer by 5-fold CV on 160 examples
+and then evaluating once on 40 held-out examples -- it doesn't invalidate
+CV-based selection (which never touches the test set, by design), but it
+does mean the reported test numbers for "the winning layer" are a bit
+pessimistic relative to what a lucky layer choice could have shown. Layer 12
+would be a reasonable alternative choice; it isn't a large enough gap to
+call either one definitively best.
 
 **Layer 11 probe, held-out test set (n=40, 20 harmful / 20 benign):**
 
