@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: activation-probe-postgres
+    environment:
+      POSTGRES_USER: probe
+      POSTGRES_PASSWORD: probe
+      POSTGRES_DB: activation_probe
+    ports:
+      - "5433:5432"
+    volumes:
+      - activation_probe_pgdata:/var/lib/postgresql/data
+
+volumes:
+  activation_probe_pgdata:

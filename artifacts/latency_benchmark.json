@@ -1,0 +1,11 @@
+{
+  "probe": {
+    "n": 20,
+    "mean_ms": 28.883343847701326,
+    "median_ms": 17.286228976445273,
+    "p95_ms": 98.65553746931262,
+    "min_ms": 13.159666967112571,
+    "max_ms": 185.76887500239536
+  },
+  "probe_model": "Qwen2.5-0.5B-Instruct (single-layer early-exit)"
+}

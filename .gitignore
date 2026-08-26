@@ -1,0 +1,26 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+*.egg-info/
+build/
+dist/
+
+# large artifacts
+data/raw/
+data/cache/
+*.safetensors
+*.pt
+*.npy
+.DS_Store
+
+# model downloads
+.hf_cache/
+
+# dbt / airflow / terraform (later phases)
+dbt_packages/
+logs/
+.terraform/
+*.tfstate
+*.tfstate.backup
