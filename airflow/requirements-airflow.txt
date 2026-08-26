@@ -1,0 +1,6 @@
+numpy
+scikit-learn
+joblib
+SQLAlchemy
+psycopg2-binary
+python-dotenv

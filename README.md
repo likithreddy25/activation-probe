@@ -15,7 +15,7 @@ Built incrementally, phase by phase, each with its own README:
 |---|---|---|
 | 1 | Probe + eval harness + FastAPI service + Postgres logging | [done](docs/PHASE1.md) |
 | 2 | dbt models on the Postgres log table | [done](docs/PHASE2.md) |
-| 3 | Airflow DAG: nightly eval reruns, dbt trigger, drift alerts | not started |
+| 3 | Airflow DAG: nightly eval reruns, dbt trigger, drift alerts | [done](docs/PHASE3.md) |
 | 4 | Containerize (Docker + kind/minikube) + Terraform | not started |
 | 5 (optional) | Second serving implementation in Go | not started |
 
@@ -68,3 +68,27 @@ DBT_PROFILES_DIR=. dbt test
 See [docs/PHASE2.md](docs/PHASE2.md) for the model layout, the actual mart
 output, and why the FPR trend is computed against a labeled seed table
 rather than raw flag counts.
+
+## Quickstart (Phase 3)
+
+A local Airflow stack (LocalExecutor, not the default CeleryExecutor --
+see docs/PHASE3.md for why) running one nightly DAG: rerun the eval
+harness, trigger the Phase 2 dbt run, then check for accuracy/AUC/flag-rate
+drift and log an alert if anything crosses a threshold.
+
+```bash
+cd airflow
+cp .env.example .env
+docker compose build
+docker compose up airflow-init                              # one-time
+docker compose up -d airflow-webserver airflow-scheduler
+docker compose exec airflow-scheduler airflow dags unpause activation_probe_nightly
+docker compose exec airflow-scheduler airflow dags trigger activation_probe_nightly
+```
+
+UI at http://localhost:8081 (airflow/airflow). See
+[docs/PHASE3.md](docs/PHASE3.md) for the two real bugs this phase found
+(a SQLAlchemy version conflict with Airflow's own pinned version, and a
+genuine dbt race condition between overlapping DAG runs) and the actual
+run evidence, including a deliberate synthetic test proving the drift
+alerting really fires.

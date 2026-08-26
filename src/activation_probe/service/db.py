@@ -6,29 +6,65 @@ import os
 from datetime import datetime, timezone
 
 from dotenv import load_dotenv
-from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text, create_engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, create_engine
+from sqlalchemy.orm import Session, declarative_base, sessionmaker
 
 load_dotenv()  # loaded here so DATABASE_URL is correct regardless of import order
 
 DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://probe:probe@localhost:5432/activation_probe")
 
-
-class Base(DeclarativeBase):
-    pass
+# Deliberately the legacy Column-based declarative style (not SQLAlchemy 2.0's
+# Mapped/mapped_column) so this module works unmodified inside Airflow's own
+# Python environment, which pins SQLAlchemy 1.4 -- forcing an upgrade there to
+# use 2.0-only syntax isn't worth the risk to Airflow's own DB layer.
+Base = declarative_base()
 
 
 class ClassificationLog(Base):
     __tablename__ = "classification_log"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    prompt: Mapped[str] = mapped_column(Text, nullable=False)
-    score: Mapped[float] = mapped_column(Float, nullable=False)
-    flagged: Mapped[bool] = mapped_column(Boolean, nullable=False)
-    category: Mapped[str | None] = mapped_column(String(64), nullable=True)
-    model_layer_used: Mapped[int] = mapped_column(Integer, nullable=False)
-    model_name: Mapped[str] = mapped_column(String(128), nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    prompt = Column(Text, nullable=False)
+    score = Column(Float, nullable=False)
+    flagged = Column(Boolean, nullable=False)
+    category = Column(String(64), nullable=True)
+    model_layer_used = Column(Integer, nullable=False)
+    model_name = Column(String(128), nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class EvalHistory(Base):
+    """One row per nightly (or manual) rerun of the eval harness against a
+    held-out split -- lets accuracy/AUC be tracked over time instead of only
+    known at training time."""
+
+    __tablename__ = "eval_history"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    split_name = Column(String(64), nullable=False)
+    model_name = Column(String(128), nullable=False)
+    probe_layer = Column(Integer, nullable=False)
+    n_examples = Column(Integer, nullable=False)
+    accuracy = Column(Float, nullable=False)
+    auc = Column(Float, nullable=True)
+    f1 = Column(Float, nullable=False)
+    false_positive_rate = Column(Float, nullable=False)
+    false_negative_rate = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+
+
+class Alert(Base):
+    """A drift alert raised by the nightly DAG. `alert_type` is one of
+    'eval_accuracy_drift', 'eval_auc_drift', or 'flag_rate_drift'."""
+
+    __tablename__ = "alerts"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    alert_type = Column(String(64), nullable=False)
+    message = Column(Text, nullable=False)
+    metric_value = Column(Float, nullable=False)
+    threshold = Column(Float, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
 
 _engine = None
