@@ -177,24 +177,31 @@ call either one definitively best.
 ## Latency benchmark
 
 `scripts/benchmark_latency.py` times the probe end-to-end (extraction +
-classification) against a naive baseline: a full OpenAI API call asked to
-classify the same prompt.
+classification) against a naive baseline: a full OpenAI API call (`gpt-4o-mini`)
+asked to classify the same prompt. Same 20 held-out test prompts, timed
+back-to-back in the same run (see `artifacts/latency_benchmark.json`):
 
-**Probe only** (20 test prompts, Qwen2.5-0.5B single-layer early-exit, MPS):
+| Metric | Probe (Qwen2.5-0.5B, early-exit, MPS) | OpenAI `gpt-4o-mini` (network call) |
+|---|---|---|
+| Mean | 16.2 ms | 1229.3 ms |
+| Median | 16.1 ms | 662.3 ms |
+| p95 | 20.1 ms | 3577.8 ms |
+| Min / Max | 13.1 ms / 21.1 ms | 448.2 ms / 7454.7 ms |
 
-| Metric | Value |
-|---|---|
-| Mean | 28.9 ms |
-| Median | 17.3 ms |
-| p95 | 98.7 ms |
-| Min / Max | 13.2 ms / 185.8 ms |
+**Speedup (mean latency): 75.7x.**
 
-The OpenAI baseline comparison requires `OPENAI_API_KEY` to be set (it
-isn't, in this environment, as of writing this doc) -- run
-`python scripts/benchmark_latency.py --n 20` once a key is available in
-`.env` to fill in the other half of this table and the resulting speedup
-factor. This is deliberately left unfilled rather than estimated: the
-ground rules for this project are no fabricated results.
+Two things worth being precise about here rather than just quoting the
+headline number:
+- The OpenAI side has a long tail (p95 3.6s, max 7.5s on one call) typical
+  of a hosted network call; the probe's latency is tight and predictable
+  (13-21ms across all 20 calls) because it's a local forward pass with no
+  network round trip. The 75.7x figure is a mean-to-mean comparison; the
+  gap is even larger at p95/tail (178x).
+- This measures latency only, not classification quality -- the OpenAI
+  baseline was never asked to agree with the probe's labels, and no
+  agreement/accuracy comparison between the two was run in this phase. The
+  claim being tested here is specifically "cheap and fast," not "equally
+  accurate."
 
 ## Service
 

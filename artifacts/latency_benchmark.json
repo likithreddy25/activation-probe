@@ -1,11 +1,21 @@
 {
   "probe": {
     "n": 20,
-    "mean_ms": 28.883343847701326,
-    "median_ms": 17.286228976445273,
-    "p95_ms": 98.65553746931262,
-    "min_ms": 13.159666967112571,
-    "max_ms": 185.76887500239536
+    "mean_ms": 16.239589609904215,
+    "median_ms": 16.146833513630554,
+    "p95_ms": 20.063918421510607,
+    "min_ms": 13.066917017567903,
+    "max_ms": 21.0511670447886
   },
-  "probe_model": "Qwen2.5-0.5B-Instruct (single-layer early-exit)"
+  "probe_model": "Qwen2.5-0.5B-Instruct (single-layer early-exit)",
+  "openai_baseline": {
+    "n": 20,
+    "mean_ms": 1229.2919603991322,
+    "median_ms": 662.3410625034012,
+    "p95_ms": 3577.8491631179377,
+    "min_ms": 448.24987498577684,
+    "max_ms": 7454.7056669835
+  },
+  "openai_baseline_model": "gpt-4o-mini",
+  "speedup_mean_x": 75.69723065227033
 }
