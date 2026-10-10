@@ -121,3 +121,7 @@ see [docs/PHASE4.md](docs/PHASE4.md) for the verification evidence and the
 honestly-stated limitations (no PVC for the model cache, no registry, no
 autoscaling -- this is a "basic Deployment + Service," not a production
 deployment).
+
+## AI assistance
+
+This project was built with the help of Claude (Anthropic) via Claude Code, which is why Claude appears as a co-author on some commits. I specified the design, reviewed the code and ran the tests and evaluations; the numbers in the phase docs come from those runs.
